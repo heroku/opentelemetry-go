@@ -74,7 +74,7 @@ func main() {
 			func(ctx context.Context) error {
 				trace.CurrentSpan(ctx).SetAttribute(lemonsKey.String("five"))
 
-				trace.CurrentSpan(ctx).AddEvent(ctx, "Sub span event")
+				trace.CurrentSpan(ctx).AddEvent(ctx, "Sub span evnt")
 
 				stats.Record(ctx, measureTwo.M(1.3))
 

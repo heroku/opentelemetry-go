@@ -17,9 +17,10 @@ package main
 import (
 	"context"
 	"fmt"
-	"go.opentelemetry.io/plugin/httptrace"
 	"io/ioutil"
 	"net/http"
+
+	"go.opentelemetry.io/plugin/httptrace"
 
 	"google.golang.org/grpc/codes"
 

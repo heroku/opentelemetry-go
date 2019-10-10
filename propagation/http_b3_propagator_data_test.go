@@ -124,7 +124,7 @@ var extractMultipleHeaders = []extractTest{
 		headers: map[string]string{
 			propagation.B3SampledHeader: "0",
 		},
-		wantSc: core.EmptySpanContext(),
+		wantSc: core.SpanContext{},
 	},
 }
 
@@ -187,7 +187,7 @@ var extractSingleHeader = []extractTest{
 		headers: map[string]string{
 			propagation.B3SingleHeader: "0",
 		},
-		wantSc: core.EmptySpanContext(),
+		wantSc: core.SpanContext{},
 	},
 }
 

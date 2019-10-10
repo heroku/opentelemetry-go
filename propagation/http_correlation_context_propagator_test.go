@@ -31,7 +31,7 @@ import (
 
 func TestExtractValidDistributedContextFromHTTPReq(t *testing.T) {
 	trace.SetGlobalTracer(&mocktrace.MockTracer{})
-	propagator := propagation.HttpCorrelationContextPropagator()
+	propagator := propagation.HTTPCorrelationContextPropagator{}
 	tests := []struct {
 		name    string
 		header  string
@@ -94,7 +94,7 @@ func TestExtractValidDistributedContextFromHTTPReq(t *testing.T) {
 
 			ctx := context.Background()
 			gotSc := propagator.Extract(ctx, req.Header)
-			if diff := cmp.Diff(gotSc, tt.wantKVs); diff != "" {
+			if diff := cmp.Diff(gotSc.KV, tt.wantKVs); diff != "" {
 				t.Errorf("Extract Tracecontext: %s: -got +want %s", tt.name, diff)
 			}
 		})
@@ -103,7 +103,7 @@ func TestExtractValidDistributedContextFromHTTPReq(t *testing.T) {
 
 func TestExtractInvalidDistributedContextFromHTTPReq(t *testing.T) {
 	trace.SetGlobalTracer(&mocktrace.MockTracer{})
-	propagator := propagation.HttpCorrelationContextPropagator()
+	propagator := propagation.HTTPCorrelationContextPropagator{}
 	tests := []struct {
 		name   string
 		header string
@@ -120,8 +120,8 @@ func TestExtractInvalidDistributedContextFromHTTPReq(t *testing.T) {
 			req.Header.Set("Correlation-Context", tt.header)
 
 			ctx := context.Background()
-			gotKvs := propagator.Extract(ctx, req.Header)
-			if diff := cmp.Diff(len(gotKvs), 0); diff != "" {
+			gotSc := propagator.Extract(ctx, req.Header)
+			if diff := cmp.Diff(len(gotSc.KV), 0); diff != "" {
 				t.Errorf("Extract Tracecontext: %s: -got +want %s", tt.name, diff)
 			}
 		})
@@ -129,7 +129,7 @@ func TestExtractInvalidDistributedContextFromHTTPReq(t *testing.T) {
 }
 
 func TestInjectCorrelationContextToHTTPReq(t *testing.T) {
-	propagator := propagation.HttpCorrelationContextPropagator()
+	propagator := propagation.HTTPCorrelationContextPropagator{}
 	tests := []struct {
 		name       string
 		kvs        []core.KeyValue
@@ -170,8 +170,12 @@ func TestInjectCorrelationContextToHTTPReq(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			req, _ := http.NewRequest("GET", "http://example.com", nil)
-			propagator.Inject(tt.kvs, req.Header)
+			ctx := propagation.WithCorrelationContextInfo(context.Background(), tt.kvs...)
+			req, err := http.NewRequestWithContext(ctx, "GET", "http://example.com", nil)
+			if err != nil {
+				t.Fatal("unexpected error creating request")
+			}
+			propagator.Inject(ctx, req.Header)
 
 			gotHeader := req.Header.Get("Correlation-Context")
 			if diff := cmp.Diff(gotHeader, tt.wantHeader); diff != "" {
@@ -182,7 +186,7 @@ func TestInjectCorrelationContextToHTTPReq(t *testing.T) {
 }
 
 func TestHttpCorrelationContextPropagator_GetAllKeys(t *testing.T) {
-	propagator := propagation.HttpCorrelationContextPropagator()
+	propagator := propagation.HTTPCorrelationContextPropagator{}
 	want := []string{"Correlation-Context"}
 	got := propagator.GetAllKeys()
 	if diff := cmp.Diff(got, want); diff != "" {

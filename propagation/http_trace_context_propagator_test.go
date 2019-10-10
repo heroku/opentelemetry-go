@@ -130,7 +130,7 @@ func TestExtractValidTraceContextFromHTTPReq(t *testing.T) {
 func TestExtractInvalidTraceContextFromHTTPReq(t *testing.T) {
 	trace.SetGlobalTracer(&mocktrace.MockTracer{})
 	propagator := propagation.HttpTraceContextPropagator()
-	wantSc := core.EmptySpanContext()
+	wantSc := core.SpanContext{}
 	tests := []struct {
 		name   string
 		header string
@@ -255,7 +255,7 @@ func TestInjectTraceContextToHTTPReq(t *testing.T) {
 		},
 		{
 			name:       "invalid spancontext",
-			sc:         core.EmptySpanContext(),
+			sc:         core.SpanContext{},
 			wantHeader: "",
 		},
 	}

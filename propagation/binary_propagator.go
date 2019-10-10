@@ -34,7 +34,7 @@ func BinaryPropagator() binaryPropagator {
 // ToBytes implements ToBytes method of propagation.BinaryFormatPropagator.
 // It serializes core.SpanContext into a byte array.
 func (bp binaryPropagator) ToBytes(sc core.SpanContext) []byte {
-	if sc == core.EmptySpanContext() {
+	if sc.IsEmpty() {
 		return nil
 	}
 	var b [29]byte
@@ -51,7 +51,7 @@ func (bp binaryPropagator) ToBytes(sc core.SpanContext) []byte {
 // It de-serializes bytes into core.SpanContext.
 func (bp binaryPropagator) FromBytes(b []byte) (sc core.SpanContext) {
 	if len(b) == 0 {
-		return core.EmptySpanContext()
+		return core.SpanContext{}
 	}
 	b = b[1:]
 	if len(b) >= 17 && b[0] == 0 {
@@ -59,7 +59,7 @@ func (bp binaryPropagator) FromBytes(b []byte) (sc core.SpanContext) {
 		sc.TraceID.Low = binary.BigEndian.Uint64(b[9:17])
 		b = b[17:]
 	} else {
-		return core.EmptySpanContext()
+		return core.SpanContext{}
 	}
 	if len(b) >= 9 && b[0] == 1 {
 		sc.SpanID = binary.BigEndian.Uint64(b[1:9])
@@ -71,5 +71,5 @@ func (bp binaryPropagator) FromBytes(b []byte) (sc core.SpanContext) {
 	if sc.IsValid() {
 		return sc
 	}
-	return core.EmptySpanContext()
+	return core.SpanContext{}
 }

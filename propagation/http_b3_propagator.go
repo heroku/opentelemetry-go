@@ -107,20 +107,20 @@ func (b3 httpB3Propagator) GetAllKeys() []string {
 func (b3 httpB3Propagator) extract(supplier apipropagation.Supplier) core.SpanContext {
 	tid, ok := b3.extractTraceID(supplier.Get(B3TraceIDHeader))
 	if !ok {
-		return core.EmptySpanContext()
+		return core.SpanContext{}
 	}
 	sid, ok := b3.extractSpanID(supplier.Get(B3SpanIDHeader))
 	if !ok {
-		return core.EmptySpanContext()
+		return core.SpanContext{}
 	}
 	sampled, ok := b3.extractSampledState(supplier.Get(B3SampledHeader))
 	if !ok {
-		return core.EmptySpanContext()
+		return core.SpanContext{}
 	}
 
 	debug, ok := b3.extracDebugFlag(supplier.Get(B3DebugFlagHeader))
 	if !ok {
-		return core.EmptySpanContext()
+		return core.SpanContext{}
 	}
 	if debug == core.TraceFlagsSampled {
 		sampled = core.TraceFlagsSampled
@@ -133,7 +133,7 @@ func (b3 httpB3Propagator) extract(supplier apipropagation.Supplier) core.SpanCo
 	}
 
 	if !sc.IsValid() {
-		return core.EmptySpanContext()
+		return core.SpanContext{}
 	}
 
 	return sc
@@ -142,45 +142,45 @@ func (b3 httpB3Propagator) extract(supplier apipropagation.Supplier) core.SpanCo
 func (b3 httpB3Propagator) extractSingleHeader(supplier apipropagation.Supplier) core.SpanContext {
 	h := supplier.Get(B3SingleHeader)
 	if h == "" || h == "0" {
-		core.EmptySpanContext()
+		return core.SpanContext{}
 	}
 	sc := core.SpanContext{}
 	parts := strings.Split(h, "-")
 	l := len(parts)
 	if l > 4 {
-		return core.EmptySpanContext()
+		return core.SpanContext{}
 	}
 
 	if l < 2 {
-		return core.EmptySpanContext()
+		return core.SpanContext{}
 	} else {
 		var ok bool
 		sc.TraceID, ok = b3.extractTraceID(parts[0])
 		if !ok {
-			return core.EmptySpanContext()
+			return core.SpanContext{}
 		}
 
 		sc.SpanID, ok = b3.extractSpanID(parts[1])
 		if !ok {
-			return core.EmptySpanContext()
+			return core.SpanContext{}
 		}
 
 		if l > 2 {
 			sc.TraceFlags, ok = b3.extractSampledState(parts[2])
 			if !ok {
-				return core.EmptySpanContext()
+				return core.SpanContext{}
 			}
 		}
 		if l == 4 {
 			_, ok = b3.extractSpanID(parts[3])
 			if !ok {
-				return core.EmptySpanContext()
+				return core.SpanContext{}
 			}
 		}
 	}
 
 	if !sc.IsValid() {
-		return core.EmptySpanContext()
+		return core.SpanContext{}
 	}
 
 	return sc

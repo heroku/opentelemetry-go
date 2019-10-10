@@ -55,42 +55,42 @@ func (hp httpTraceContextPropagator) Inject(ctx context.Context, supplier apipro
 func (hp httpTraceContextPropagator) Extract(ctx context.Context, supplier apipropagation.Supplier) core.SpanContext {
 	h := supplier.Get(TraceparentHeader)
 	if h == "" {
-		return core.EmptySpanContext()
+		return core.SpanContext{}
 	}
 
 	h = strings.Trim(h, "-")
 	if !traceCtxRegExp.MatchString(h) {
-		return core.EmptySpanContext()
+		return core.SpanContext{}
 	}
 
 	sections := strings.Split(h, "-")
 	if len(sections) < 4 {
-		return core.EmptySpanContext()
+		return core.SpanContext{}
 	}
 
 	if len(sections[0]) != 2 {
-		return core.EmptySpanContext()
+		return core.SpanContext{}
 	}
 	ver, err := hex.DecodeString(sections[0])
 	if err != nil {
-		return core.EmptySpanContext()
+		return core.SpanContext{}
 	}
 	version := int(ver[0])
 	if version > maxVersion {
-		return core.EmptySpanContext()
+		return core.SpanContext{}
 	}
 
 	if version == 0 && len(sections) != 4 {
-		return core.EmptySpanContext()
+		return core.SpanContext{}
 	}
 
 	if len(sections[1]) != 32 {
-		return core.EmptySpanContext()
+		return core.SpanContext{}
 	}
 
 	result, err := strconv.ParseUint(sections[1][0:16], 16, 64)
 	if err != nil {
-		return core.EmptySpanContext()
+		return core.SpanContext{}
 	}
 	var sc core.SpanContext
 
@@ -98,30 +98,30 @@ func (hp httpTraceContextPropagator) Extract(ctx context.Context, supplier apipr
 
 	result, err = strconv.ParseUint(sections[1][16:32], 16, 64)
 	if err != nil {
-		return core.EmptySpanContext()
+		return core.SpanContext{}
 	}
 	sc.TraceID.Low = result
 
 	if len(sections[2]) != 16 {
-		return core.EmptySpanContext()
+		return core.SpanContext{}
 	}
 	result, err = strconv.ParseUint(sections[2][0:], 16, 64)
 	if err != nil {
-		return core.EmptySpanContext()
+		return core.SpanContext{}
 	}
 	sc.SpanID = result
 
 	if len(sections[3]) != 2 {
-		return core.EmptySpanContext()
+		return core.SpanContext{}
 	}
 	opts, err := hex.DecodeString(sections[3])
 	if err != nil || len(opts) < 1 || (version == 0 && opts[0] > 2) {
-		return core.EmptySpanContext()
+		return core.SpanContext{}
 	}
 	sc.TraceFlags = opts[0] &^ core.TraceFlagsUnused
 
 	if !sc.IsValid() {
-		return core.EmptySpanContext()
+		return core.SpanContext{}
 	}
 
 	return sc

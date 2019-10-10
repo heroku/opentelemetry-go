@@ -61,7 +61,7 @@ var _ apitrace.Span = &span{}
 
 func (s *span) SpanContext() core.SpanContext {
 	if s == nil {
-		return core.EmptySpanContext()
+		return core.SpanContext{}
 	}
 	return s.spanContext
 }
@@ -177,7 +177,7 @@ func (s *span) SetName(name string) {
 	noParent := s.data.ParentSpanID == 0
 	var ctx core.SpanContext
 	if noParent {
-		ctx = core.EmptySpanContext()
+		ctx = core.SpanContext{}
 	} else {
 		// FIXME: Where do we get the parent context from?
 		// From SpanStore?
@@ -301,7 +301,7 @@ func startSpanInternal(name string, parent core.SpanContext, remoteParent bool, 
 
 	cfg := config.Load().(*Config)
 
-	if parent == core.EmptySpanContext() {
+	if parent.IsEmpty() {
 		span.spanContext.TraceID = cfg.IDGenerator.NewTraceID()
 		noParent = true
 	}

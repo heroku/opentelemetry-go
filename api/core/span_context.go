@@ -37,11 +37,11 @@ type SpanContext struct {
 	TraceID    TraceID
 	SpanID     uint64
 	TraceFlags byte
+	KV         []KeyValue
 }
 
-// EmptySpanContext is meant for internal use to return invalid span context during error conditions.
-func EmptySpanContext() SpanContext {
-	return SpanContext{}
+func (sc SpanContext) IsEmpty() bool {
+	return sc.TraceID.High == 0 && sc.TraceID.Low == 0 && sc.SpanID == 0 && sc.TraceFlags == 0 && len(sc.KV) == 0
 }
 
 func (sc SpanContext) IsValid() bool {

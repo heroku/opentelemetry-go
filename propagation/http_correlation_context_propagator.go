@@ -24,22 +24,32 @@ import (
 	apipropagation "go.opentelemetry.io/api/propagation"
 )
 
+type httpCorrrelationContextKeyType int
+
 const (
 	CorrelationContextHeader = "Correlation-Context"
+
+	correlationDataKey httpCorrrelationContextKeyType = iota
 )
 
-type httpCorrelationContextPropagator struct{}
+type HTTPCorrelationContextPropagator struct {
+	KV []core.KeyValue
+}
 
-var _ apipropagation.TextFormatCorrelationContextPropagator = httpCorrelationContextPropagator{}
+var _ apipropagation.TextFormatPropagator = HTTPCorrelationContextPropagator{}
 
-func (hp httpCorrelationContextPropagator) Inject(kvs []core.KeyValue, supplier apipropagation.Supplier) {
-	if len(kvs) == 0 {
-		return
-	}
+func WithCorrelationContextInfo(ctx context.Context, kv ...core.KeyValue) context.Context {
+	return context.WithValue(ctx, correlationDataKey, kv)
+}
 
+func getCorrelationsContextInfo(ctx context.Context) []core.KeyValue {
+	return ctx.Value(correlationDataKey).([]core.KeyValue)
+}
+
+func (p HTTPCorrelationContextPropagator) Inject(ctx context.Context, supplier apipropagation.Supplier) {
 	var headerValueBuilder strings.Builder
 	firstIter := true
-	for _, kv := range kvs {
+	for _, kv := range getCorrelationsContextInfo(ctx) {
 		if !firstIter {
 			headerValueBuilder.WriteRune(',')
 		}
@@ -51,14 +61,15 @@ func (hp httpCorrelationContextPropagator) Inject(kvs []core.KeyValue, supplier 
 	supplier.Set(CorrelationContextHeader, headerValueBuilder.String())
 }
 
-func (hp httpCorrelationContextPropagator) Extract(ctx context.Context, supplier apipropagation.Supplier) []core.KeyValue {
+func (hp HTTPCorrelationContextPropagator) Extract(ctx context.Context, supplier apipropagation.Supplier) core.SpanContext {
 	correlationContext := supplier.Get(CorrelationContextHeader)
 	if correlationContext == "" {
-		return nil
+		return core.SpanContext{}
 	}
 
 	contextValues := strings.Split(correlationContext, ",")
-	keyValues := make([]core.KeyValue, 0, len(contextValues))
+	var sc core.SpanContext
+	sc.KV = make([]core.KeyValue, 0, len(contextValues))
 	for _, contextValue := range contextValues {
 		valueAndProps := strings.Split(contextValue, ";")
 		if len(valueAndProps) < 1 {
@@ -88,17 +99,11 @@ func (hp httpCorrelationContextPropagator) Extract(ctx context.Context, supplier
 			trimmedValueWithProps.WriteString(prop)
 		}
 
-		keyValues = append(keyValues, key.New(trimmedName).String(trimmedValueWithProps.String()))
+		sc.KV = append(sc.KV, key.New(trimmedName).String(trimmedValueWithProps.String()))
 	}
-	return keyValues
+	return sc
 }
 
-func (hp httpCorrelationContextPropagator) GetAllKeys() []string {
+func (hp HTTPCorrelationContextPropagator) GetAllKeys() []string {
 	return []string{CorrelationContextHeader}
-}
-
-// HttpTraceContextPropagator creates a new text format propagator that propagates SpanContext
-// in W3C TraceContext format.
-func HttpCorrelationContextPropagator() apipropagation.TextFormatCorrelationContextPropagator {
-	return httpCorrelationContextPropagator{}
 }

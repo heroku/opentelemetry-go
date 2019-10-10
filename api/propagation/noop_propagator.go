@@ -31,7 +31,7 @@ func (np NoopTextFormatPropagator) Inject(ctx context.Context, supplier Supplier
 
 // Extract does nothing and returns an empty SpanContext
 func (np NoopTextFormatPropagator) Extract(ctx context.Context, supplier Supplier) core.SpanContext {
-	return core.EmptySpanContext()
+	return core.SpanContext{}
 }
 
 // GetAllKeys returns empty list of strings.

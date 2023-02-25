@@ -20,7 +20,7 @@ require (
 	github.com/spf13/afero v1.2.2 // indirect
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/uudashr/gocognit v1.0.0 // indirect
-	golang.org/x/sys v0.0.0-20191010194322-b09406accb47 // indirect
+	golang.org/x/sys v0.1.0 // indirect
 	golang.org/x/tools v0.0.0-20191015211201-9c6d90b5a7d0
 	google.golang.org/genproto v0.0.0-20190925194540-b8fbc687dcfb // indirect
 	google.golang.org/grpc v1.24.0
